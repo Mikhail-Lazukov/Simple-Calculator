@@ -8,56 +8,98 @@ namespace Simple_Calculator
 {
     class Program
     {
-
-        // Реализует взаимодействие программы с пользователем
-        static void Dialog()
+        static void Greet()
         {
-            
-            int operation;
-            double a = 0;
-            double b = 0;
-            bool isFirstCalculation = true;
-
-            try
-            {
-                do
-                {
-                    operation = ChooseOperation();
-                    if (isFirstCalculation)
-                        a = InputData();
-                    if (operation < 5)
-                        b = InputData();
-                    double result = Calculation(a, b, operation);
-                    Console.WriteLine(PrepareOutput(a, b, result, operation));
-                    isFirstCalculation = false;
-                    a = result;
-
-                } while (ContinueCalculation());
-            }
-            catch (Exception e)
-            {
-                ShowError(e);
-            }
+            Console.WriteLine("Данный калькулятор выполняет простейшие действия " +
+                "(+, - , *, /, возведение в квадрат, извлечение корня)\n" +
+                "Числа от знаков операций ОБЯЗАТЕЛЬНО должны ОТДЕЛЯТЬСЯ ПРОБЕЛОМ \n" +
+                "Для возведения в квадрат введите sqr \"число\" \n" +
+                "Для извлечения корня sqrt \"число\" \n" +
+                "Для выполения операций над результатом введите требуемую команду без первого операнда \n" +
+                "Для выхода из калькулятора введите exit");
         }
 
-        // Треббуется ли продолжить вычисления над результатом
-        static bool ContinueCalculation()
+        static void StartCalculation()
         {
-            Console.WriteLine("Продолжить вычисления над результатом? y/n");
-            while (true)
+            double result = 0;
+            bool isFirstCalculation = true;
+            string operations = "+-*/";
+            while(true)
             {
                 try
                 {
-
-                    string answer = Console.ReadLine();
-                    if (IsExitRequired(answer))
+                    double a = 0;
+                    double b = 0;
+                    int operationNumber = 0;
+                    string rawInput = Console.ReadLine();
+                    if(IsExitRequired(rawInput))
+                    {
                         Environment.Exit(0);
-                    else if (answer == "y")
-                        return true;
-                    else if (answer == "n")
-                        return false;
+                    }
+                    rawInput = rawInput.Replace(".", ",");
+                    string[] input = rawInput.Split(new char[] { ' ' });
+
+                    if (input.Length == 3)
+                    {
+
+                        a = double.Parse(input[0]);
+                        b = double.Parse(input[2]);
+                        operationNumber = operations.IndexOf(input[1]);
+
+                        result = Calculate(a, b, operationNumber);
+                    }
+                    else if (input.Length == 2)
+                    {
+                        if (input[0] == "sqr")
+                        {
+                            a = double.Parse(input[1]);
+                            operationNumber = 4;
+                            result = Calculate(a, b, operationNumber);
+                        }
+                        else if (input[0] == "sqrt")
+                        {
+                            a = double.Parse(input[1]);
+                            operationNumber = 5;
+                            result = Calculate(a, b, operationNumber);
+                        }
+                        else if (!isFirstCalculation)
+                        {
+                            a = result;
+                            b = double.Parse(input[1]);
+                            operationNumber = operations.IndexOf(input[0]);
+
+                            result = Calculate(a, b, operationNumber);
+                        }
+                        else
+                        {
+                            throw new FormatException("Неправильный формат входных данных!");
+                        }
+                    }
+                    else if (input.Length == 1)
+                    {
+                        if (input[0] == "sqr" && !isFirstCalculation)
+                        {
+                            a = result;
+                            operationNumber = 4;
+                            result = Calculate(a, b, operationNumber);
+                        }
+                        else if (input[0] == "sqrt" && !isFirstCalculation)
+                        {
+                            a = result;
+                            operationNumber = 5;
+                            result = Calculate(a, b, operationNumber);
+                        }
+                        else
+                        {
+                            throw new FormatException("Неправильный формат входных данных!");
+                        }
+                    }
                     else
-                        throw new ArgumentException("Ответ должен быть либо 'y', либо 'n'!");
+                    {
+                        throw new FormatException("Неправильный формат входных данных!");
+                    }
+                    Console.WriteLine(PrepareOutput(a, b, result, operationNumber));
+                    isFirstCalculation = false;
                 }
                 catch (Exception e)
                 {
@@ -66,83 +108,46 @@ namespace Simple_Calculator
             }
         }
 
-        // Подготовка строки с записью произведенных вычислений
-        static string PrepareOutput(double a, double b, double result, int operation)
+        static double Calculate(double a, double b, int operation)
         {
-            string output;
-            if (operation == 1)
-                output = a.ToString() + " + " + b.ToString() +  " = " + result.ToString();
-            else if (operation == 2)
-                output = a.ToString() + " - " + b.ToString() + " = " + result.ToString();
-            else if (operation == 3)
-                output = a.ToString() + " * " + b.ToString() + " = " + result.ToString();
-            else if (operation == 4)
-                output = a.ToString() + " / " + b.ToString() + " = " + result.ToString();
-            else if (operation == 5)
-                output = "sqr(" + a.ToString() +  ") = " + result.ToString();
-            else
-                output = "sqrt(" + a.ToString() + ") = " + result.ToString();
-            return output;
-        }
-
-        // Выполение операций счета
-        static double Calculation(double a, double b,  int operation)
-        {
-            if (operation == 1)
+            if (operation == 0)
                 return a + b;
-            else if (operation == 2)
+            else if (operation == 1)
                 return a - b;
-            else if (operation == 3)
+            else if (operation == 2)
                 return a * b;
-            else if (operation == 4)
+            else if (operation == 3)
                 return a / b;
-            else if (operation == 5)
+            else if (operation == 4)
                 return a * a;
-            else
+            else if (operation == 5)
             {
                 if (a < 0)
                     throw new ArgumentException("Невозможно вычислить корень из отрицательного числа!");
                 return Math.Sqrt(a);
             }
+            else
+                throw new FormatException("Неправильный формат входных данных!");
         }
 
-        // Выбор требуемой операции
-        static int ChooseOperation()
+        static string PrepareOutput(double a, double b, double result, int operation)
         {
-            Console.WriteLine("Выберите операцию:\n" +
-                "1 - Сложение\n" +
-                "2 - Вычитание\n" +
-                "3 - Умножение\n" +
-                "4 - Деление\n" +
-                "5 - Возведение в квадрат\n" +
-                "6 - Вычисление корня");
-            while (true)
-            {
-                try
-                {
-                    string input = Console.ReadLine();
-                    if (IsExitRequired(input))
-                    {
-                        Environment.Exit(0);
-                    }
-                    if (input == "1" || input == "2" || input == "3" ||
-                        input == "4" || input == "5" || input == "6")
-                    {
-                        return Convert.ToInt16(input);
-                    }
-                    else
-                        throw new FormatException("Выберите одну из операций, написав соответствующую цифру!");
-                }
-                catch (Exception e)
-                {
-                    ShowError(e);
-                }
-            }
-
+            string output;
+            if (operation == 0)
+                output = a.ToString() + " + " + b.ToString() + " = " + result.ToString();
+            else if (operation == 1)
+                output = a.ToString() + " - " + b.ToString() + " = " + result.ToString();
+            else if (operation == 2)
+                output = a.ToString() + " * " + b.ToString() + " = " + result.ToString();
+            else if (operation == 3)
+                output = a.ToString() + " / " + b.ToString() + " = " + result.ToString();
+            else if (operation == 4)
+                output = "sqr(" + a.ToString() + ") = " + result.ToString();
+            else
+                output = "sqrt(" + a.ToString() + ") = " + result.ToString();
+            return output;
         }
 
-
-        // Выход из программы
         static bool IsExitRequired(string input)
         {
             if (input == "exit")
@@ -151,42 +156,15 @@ namespace Simple_Calculator
                 return false;
         }
 
-        // Вывод ошибок в консоль
         static void ShowError(Exception e)
         {
             Console.WriteLine(e.Message);
         }
 
-
-        // Считывание операндов из консоли
-        static double InputData()
-        {
-            Console.WriteLine("Введите число:");
-            while(true)
-            {
-                try
-                {
-                    string input = Console.ReadLine();
-                    input = input.Replace('.', ',');
-                    if (IsExitRequired(input))
-                    {
-                        Environment.Exit(0);
-                    }
-                    return double.Parse(input);
-                }
-                catch (Exception e)
-                {
-                    ShowError(e);
-                }
-            }
-        }
-
         static void Main(string[] args)
         {
-            while(true)
-            {
-                Dialog();
-            }
+            Greet();
+            StartCalculation();
         }
     }
 }
